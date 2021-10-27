@@ -1,35 +1,26 @@
-// TODO: 
-// Document and comment files
-// Functionalize and refactor
-// Implement debouncing delay
-// Range-based for loop in main task
 
+#include <stdlib.h>
+#include <StackArray.h>
 
-// FILE: arduino_synth_poc.ino
-// 
-
-#include <Wire.h>
-#include <Adafruit_MCP4725.h>
-
-// Declare DAC object
-Adafruit_MCP4725 dac;
-
-// Use DAC in 8-bit resolution mode
-#define DAC_RESOLUTION    (8)
 
 // Define Input Pin Map
-#define B0 2
-#define B1 3
-#define B2 4
-#define B3 5
-#define B4 6
-#define B5 7
-#define B6 8
-#define B7 9
+#define K0 2
+#define K1 3
+#define K2 4
+#define K3 5
+#define K4 6
+#define K5 7
+#define K6 8
+#define K7 9
+
+#define octDwn 11
+#define octUp 12
+
+#define outPin 13
 
 // OCCR Values for C4 - C5 octave - will achieve physically correct
 // frequencies for square wave output
-const PROGMEM uint16_t FREQ_LOOKUP[3][8] {
+const uint16_t FREQ_LOOKUP[3][8] {
   {30577, 27240, 24269, 22907,
     20407, 18181, 16197, 15288},
   {15288, 13620, 12134, 11453,
@@ -38,34 +29,33 @@ const PROGMEM uint16_t FREQ_LOOKUP[3][8] {
     5101, 4545, 4049, 3821}
 };
 
-bool OUT_STATE = true;  // Drives hi/low logic levels for square wave output to speaker module
-bool setupFlag = true;  // Flag used for button-press logic enable
-int octaveIdx = 1;
+StackArray<unsigned int> btnStack;
+
+bool pressedFlags[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+bool OUT_STATE = false;  // Drives hi/low logic levels for square wave output to speaker module
+
+unsigned int octaveIdx = 1;
+
+unsigned int stackSize = 0;
 
 void setup() {
-
-
+  unsigned int i, j;
+  
+  unsigned int loopIdx = 0;
+  
   // Initialize serial console w/ Baud Rate of 9600 Hz
   Serial.begin(9600);
   Serial.println("Hello!");
 
   // Set up GPIO input pins
   Serial.println("Setting Up I/O ...");
-  pinMode(2, INPUT);
-  pinMode(3, INPUT);
-  pinMode(4, INPUT);
-  pinMode(5, INPUT);
-  pinMode(6, INPUT);
-  pinMode(7, INPUT);
-  pinMode(8, INPUT);
-  pinMode(9, INPUT);
+  for (loopIdx = 2; loopIdx <= 11; loopIdx++) {
+      pinMode(loopIdx, INPUT);
+    }
 
-  // Initialize DAC IC
-  // Serial.println("Initializing DAC ...");
-  // dac.begin(0x62);
+  pinMode(outPin, OUTPUT);
 
-  pinMode(13, OUTPUT);        //Set the pin to be OUTPUT - drives square wave to speaker module
-  
   cli();                      //stop interrupts for till we make the settings
   
   /*1. First we reset the control register to amke sure we start with everything disabled.*/
@@ -83,21 +73,19 @@ void setup() {
   // TIMSK1 |= B00000010;        //Set OCIE1A to 1 so we enable compare match A
 
   sei();                         //Enable back the interrupts
-  Serial.println("Initialization complete ...");
 
-  for (int rowIdx = 0; rowIdx <3; rowIdx ++){
-    for (int colIdx = 0; colIdx <8; colIdx++) {
-        Serial.println(FREQ_LOOKUP[rowIdx][colIdx]);
-      }
-    }
+  
+  Serial.println("Initialization complete ...");  
+  
 }
 
-void loop(){
-  // put your main code here, to run repeatedly:
-
-  cli();                          // Disable global interrupts until button pressed
-  setupFlag = 1;                  // Reset setupFlag after iteration through main loop
-
+void loop() {
+  
+  unsigned int btnCntr = 0;
+  unsigned int loopIdx = 0;
+  unsigned int lastPress = 0;
+  unsigned int btnNumber;
+  
   if (digitalRead(11) == LOW){      // Octave shift down
     if (octaveIdx == 0){
       octaveIdx = 2;
@@ -116,137 +104,40 @@ void loop(){
         delay(100);  // Debounce
   }
 
-  // Serial.print("Octave level =");
-  // Serial.println(octaveIdx);
-  
-  while (digitalRead(B0) == LOW) {
-    if (setupFlag) {
-      cli();
-      TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
-      OCR1A = FREQ_LOOKUP[octaveIdx][0];     // C4
-      
-      Serial.print("Output compare val: ");
-      Serial.println(FREQ_LOOKUP[octaveIdx][0]);
-      
-      setupFlag = 0;
-      sei();
-    }
+  // Scan keyboard task
+  for (loopIdx = 2; loopIdx <= 9; loopIdx++) {
+      if(digitalRead(loopIdx) == LOW) {                      
+            // pressedFlags[loopIdx] = 1;         
+            btnStack.push(loopIdx);
+            delay(50);
+      }
   }
 
-  TIMSK1 |= B00000000;            // Disable OCC - stops timer interrupts from firing after button released
+  stackSize = btnStack.count();
 
-  while (digitalRead(B1) == LOW) {
-    if (setupFlag) {
-      cli();
-      TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
-      OCR1A = FREQ_LOOKUP[octaveIdx][1];     // D4
+  if (!btnStack.isEmpty()) {
+    btnNumber = btnStack.peek();
 
-      Serial.print("Output compare val: ");
-      Serial.println(FREQ_LOOKUP[octaveIdx][1]);
-      
-      setupFlag = 0;
-      sei();
-    }
+    // Enable output task  - issue here
+    for (loopIdx = 0; loopIdx <= stackSize; loopIdx++) {
+      btnNumber = btnStack.peek();
+        if (digitalRead(btnNumber) == HIGH) {
+          btnStack.pop();
+          stackSize--;
+        } else {
+           OCR1A = FREQ_LOOKUP[octaveIdx][btnNumber - 2];
+           TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
+        }
+     }
   }
 
-  TIMSK1 |= B00000000;            // Disable OCC - stops timer interrupts from firing after button released
+    Serial.print("Stack size: ");
+    Serial.println(btnStack.count());
 
-  while (digitalRead(B2) == LOW) {
-    if (setupFlag) {
-      cli();
-      TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
-      OCR1A = FREQ_LOOKUP[octaveIdx][2];     // E4
-
-      Serial.print("Output compare val: ");
-      Serial.println(FREQ_LOOKUP[octaveIdx][2]);
-      
-      setupFlag = 0;
-      sei();
-    }
-  }
-
-  TIMSK1 |= B00000000;            // Disable OCC - stops timer interrupts from firing after button released
-
-  while (digitalRead(B3) == LOW) {
-    if (setupFlag) {
-      cli();
-      TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
-      OCR1A = FREQ_LOOKUP[octaveIdx][3];     // F4
-
-      Serial.print("Output compare val: ");
-      Serial.println(FREQ_LOOKUP[octaveIdx][3]);
-      
-      setupFlag = 0;
-      sei();
-    }
-  }
-
-  TIMSK1 |= B00000000;            // Disable OCC - stops timer interrupts from firing after button released
-
-  while (digitalRead(B4) == LOW) {
-    if (setupFlag) {
-      cli();
-      TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
-      OCR1A = FREQ_LOOKUP[octaveIdx][4];     // G4
-
-      Serial.print("Output compare val: ");
-      Serial.println(FREQ_LOOKUP[octaveIdx][4]);
-      
-      setupFlag = 0;
-      sei();
-    }
-  }
-
-  TIMSK1 |= B00000000;            // Disable OCC - stops timer interrupts from firing after button released
-
-  while (digitalRead(B5) == LOW) {
-    if (setupFlag) {
-      cli();
-      TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
-      OCR1A = FREQ_LOOKUP[octaveIdx][5];     // A4
-
-
-      Serial.print("Output compare val: ");
-      Serial.println(FREQ_LOOKUP[octaveIdx][5]);
-      
-      setupFlag = 0;
-      sei();
-    }
-  }
-
-  TIMSK1 |= B00000000;            // Disable OCC - stops timer interrupts from firing after button released
-
-  while (digitalRead(B6) == LOW) {
-    if (setupFlag) {
-      cli();
-      TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
-      OCR1A = FREQ_LOOKUP[octaveIdx][6];     // B4
-
-      Serial.print("Output compare val: ");
-      Serial.println(FREQ_LOOKUP[octaveIdx][6]);
-      
-      setupFlag = 0;
-      sei();
-    }
-  }
-
-  TIMSK1 |= B00000000;            // Disable OCC - stops timer interrupts from firing after button released
-
-  while (digitalRead(B7) == LOW) {
-    if (setupFlag) {
-      cli();
-      TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
-      OCR1A = FREQ_LOOKUP[octaveIdx][7];     // C5
-
-      Serial.print("Output compare val: ");
-      Serial.println(FREQ_LOOKUP[octaveIdx][7]);
-      
-      setupFlag = 0;
-      sei();
-    }
-  }
-
-  TIMSK1 |= B00000000;            // Disable OCC - stops timer interrupts from firing after button released
+    //Disable output if no buttons held
+    if (btnStack.isEmpty()) {
+          TIMSK1 &= B00000000;   // Turn off timer system
+    }   
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -255,6 +146,6 @@ ISR(TIMER1_COMPA_vect) {
 
   OUT_STATE = !OUT_STATE;      //Invert output state
 
-  digitalWrite(13, OUT_STATE); //Write new state to the speaker on pin D5
+  digitalWrite(outPin, OUT_STATE); //Write new state to the speaker on pin D5
 
 }
