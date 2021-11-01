@@ -1,7 +1,5 @@
-
 #include <stdlib.h>
 #include <StackArray.h>
-
 
 // Define Input Pin Map
 #define K0 2
@@ -29,9 +27,9 @@ const uint16_t FREQ_LOOKUP[3][8] {
     5101, 4545, 4049, 3821}
 };
 
-StackArray<unsigned int> btnStack;
+bool btnFlags[8] = {0,0,0,0,0,0,0,0};
 
-bool pressedFlags[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+StackArray<unsigned int> btnStack;
 
 bool OUT_STATE = false;  // Drives hi/low logic levels for square wave output to speaker module
 
@@ -80,6 +78,8 @@ void setup() {
 }
 
 void loop() {
+
+  int i;
   
   unsigned int btnCntr = 0;
   unsigned int loopIdx = 0;
@@ -106,34 +106,36 @@ void loop() {
 
   // Scan keyboard task
   for (loopIdx = 2; loopIdx <= 9; loopIdx++) {
-      if(digitalRead(loopIdx) == LOW) {                      
-            // pressedFlags[loopIdx] = 1;         
-            btnStack.push(loopIdx);
-            delay(50);
+      if(digitalRead(loopIdx) == LOW) {
+            if (btnFlags[loopIdx - 2] == 0){
+              btnFlags[loopIdx - 2] = 1;                              
+              btnStack.push(loopIdx - 2);
+            }
+            delay(10);
       }
   }
 
   stackSize = btnStack.count();
 
-  if (!btnStack.isEmpty()) {
-    btnNumber = btnStack.peek();
+  Serial.println(stackSize);
 
-    // Enable output task  - issue here
+  if (!btnStack.isEmpty()) {
+    // btnNumber = btnStack.peek();
+
+    // Enable output task  - issue here -- Stack overflowing?? -- Print stacksize to debug
     for (loopIdx = 0; loopIdx <= stackSize; loopIdx++) {
       btnNumber = btnStack.peek();
-        if (digitalRead(btnNumber) == HIGH) {
+        if (digitalRead(btnNumber + 2) == HIGH) {
           btnStack.pop();
+          btnFlags[btnNumber] = 0;
           stackSize--;
         } else {
-           OCR1A = FREQ_LOOKUP[octaveIdx][btnNumber - 2];
+           OCR1A = FREQ_LOOKUP[octaveIdx][btnNumber];
            TIMSK1 |= B00000010;        // Set OCIE1A to 1 so we enable compare match A
         }
      }
   }
-
-    Serial.print("Stack size: ");
-    Serial.println(btnStack.count());
-
+    
     //Disable output if no buttons held
     if (btnStack.isEmpty()) {
           TIMSK1 &= B00000000;   // Turn off timer system
