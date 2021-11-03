@@ -16,3 +16,5 @@ clkPeriod = 1/clkFreq;
 
 numTicks = ((freqPeriod./clkPeriod)./2)-1;  % This array holds the correct output compare
                                             % values for 16MHz clock MCU
+                                            
+numTicks2 = numTicks ./ 8;                  % Correct values for prescaler = 8                                            
