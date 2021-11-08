@@ -1,9 +1,9 @@
 
 
 #if(ARDUINO >= 100)
-	#include <Arduino.h>
+  #include <Arduino.h>
 #else
-	#include <WProgram.h>
+  #include <WProgram.h>
 #endif
 
 #include <inttypes.h>
@@ -11,9 +11,9 @@
 #include "IQS5xx.h"
 #include "defs.h"
 
-uint16_t 	ui16Timeout = 100;  // Timeout on i2c in ms
-uint8_t 	ui8Success;
-uint32_t 	ui32StartTime;
+uint16_t  ui16Timeout = 100;  // Timeout on i2c in ms
+uint8_t   ui8Success;
+uint32_t  ui32StartTime;
 //
 // Function prototypes
 //
@@ -39,26 +39,26 @@ uint8_t I2C_Read2(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfB
 //*****************************************************************************
 void I2C_Setup(void)
 {
-	// Set SDA and SCL to inputs
-	//
-	#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega328P__)
-		SetBit(PORTC, 4);
-		SetBit(PORTC, 5);
-	#else
-		SetBit(PORTD, 0);
-		SetBit(PORTD, 1);
-	#endif
-	//
-	// Set prescaler and clock frequency
-	//
-	ClearBit(TWSR, TWPS0);
-	ClearBit(TWSR, TWPS1);
-	TWBR = ((F_CPU / 100000) - 16) / 2;
-	//
-	// Enable module, and set to ACK
-	//
-	SetBit(TWCR, TWEA);
-	SetBit(TWCR, TWEN); 
+  // Set SDA and SCL to inputs
+  //
+  #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega328P__)
+    SetBit(PORTC, 4);
+    SetBit(PORTC, 5);
+  #else
+    SetBit(PORTD, 0);
+    SetBit(PORTD, 1);
+  #endif
+  //
+  // Set prescaler and clock frequency
+  //
+  ClearBit(TWSR, TWPS0);
+  ClearBit(TWSR, TWPS1);
+  TWBR = ((F_CPU / 100000) - 16) / 2;
+  //
+  // Enable module, and set to ACK
+  //
+  SetBit(TWCR, TWEA);
+  SetBit(TWCR, TWEN); 
 }
  
 //*****************************************************************************
@@ -79,28 +79,28 @@ void I2C_Setup(void)
 //*****************************************************************************
 uint8_t I2C_Write(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfBytes)
 {
-	uint8_t ui8Retry = 4;
-	
-	ui8Success = I2C_Write2(ui16RegisterAddress, pData, ui8NoOfBytes);
-	//
-	// If comms was not successful, retry 4 more times
-	//
-	while((!ui8Success) && (ui8Retry != 0))
-	{
-		delay(5);
-		ui8Success = I2C_Write2(ui16RegisterAddress, pData, ui8NoOfBytes);
-		ui8Retry--;
-	}
-	
-	if(ui8Success)
-	{
-		return(TRUE);
-	}
-	else
-	{
-		Serial.println("Comms write error");
-		return(FALSE);
-	}
+  uint8_t ui8Retry = 4;
+  
+  ui8Success = I2C_Write2(ui16RegisterAddress, pData, ui8NoOfBytes);
+  //
+  // If comms was not successful, retry 4 more times
+  //
+  while((!ui8Success) && (ui8Retry != 0))
+  {
+    delay(5);
+    ui8Success = I2C_Write2(ui16RegisterAddress, pData, ui8NoOfBytes);
+    ui8Retry--;
+  }
+  
+  if(ui8Success)
+  {
+    return(TRUE);
+  }
+  else
+  {
+    Serial.println("Comms write error");
+    return(FALSE);
+  }
 }
 
 //*****************************************************************************
@@ -122,28 +122,28 @@ uint8_t I2C_Write(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfB
 //*****************************************************************************
 uint8_t I2C_Read(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfBytes)
 {
-	uint8_t ui8Retry = 4;
-	
-	ui8Success = I2C_Read2(ui16RegisterAddress, pData, ui8NoOfBytes);
-	//
-	// If comms was not successful, retry 4 more times
-	//
-	while((!ui8Success) && (ui8Retry != 0))
-	{
-		delay(5);
-		ui8Success = I2C_Read2(ui16RegisterAddress, pData, ui8NoOfBytes);
-		ui8Retry--;
-	}
-	
-	if(ui8Success)
-	{
-		return(TRUE);
-	}
-	else
-	{
-		Serial.println("Comms read error");
-		return(FALSE);
-	}
+  uint8_t ui8Retry = 4;
+  
+  ui8Success = I2C_Read2(ui16RegisterAddress, pData, ui8NoOfBytes);
+  //
+  // If comms was not successful, retry 4 more times
+  //
+  while((!ui8Success) && (ui8Retry != 0))
+  {
+    delay(5);
+    ui8Success = I2C_Read2(ui16RegisterAddress, pData, ui8NoOfBytes);
+    ui8Retry--;
+  }
+  
+  if(ui8Success)
+  {
+    return(TRUE);
+  }
+  else
+  {
+    Serial.println("Comms read error");
+    return(FALSE);
+  }
 }
 
 //*****************************************************************************
@@ -152,7 +152,7 @@ uint8_t I2C_Read(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfBy
 //!                            
 //! This function waits for the RDY window to be available. RDY I/O indicates 
 //! when the communication window is available.  
-//!			                         
+//!                              
 //! \param None
 //!                                             
 //! \return None
@@ -160,10 +160,10 @@ uint8_t I2C_Read(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfBy
 //*****************************************************************************
 void RDY_wait() 
 {
-	while(digitalRead(RDY_PIN) == 0)
-	{
-		__asm__("nop\n\t");
-	}
+  while(digitalRead(RDY_PIN) == 0)
+  {
+    __asm__("nop\n\t");
+  }
 }
 
 //*****************************************************************************
@@ -171,10 +171,10 @@ void RDY_wait()
 //! Terminate communication window
 //!                            
 //! The IQS5xx B000 does not close the communication window on the reception of 
-//!	the STOP bit; therefore this function sends the END COMMUNICATION WINDOW 
-//!	COMMAND (Please see datasheet for more information). RDY will go low after 
-//!	receiving any write to 0xEEEE followed by a STOP. 
-//!			                         
+//! the STOP bit; therefore this function sends the END COMMUNICATION WINDOW 
+//! COMMAND (Please see datasheet for more information). RDY will go low after 
+//! receiving any write to 0xEEEE followed by a STOP. 
+//!                              
 //! \param None
 //!                                           
 //! \return None
@@ -194,260 +194,260 @@ void Close_Comms()
 
 void I2C_Reset(void)
 {
-	// Release SCL and SDA lines and re-enable module
-	//
-	TWCR = 0;
-	SetBit(TWCR, TWEA);
-	SetBit(TWCR, TWEN);
+  // Release SCL and SDA lines and re-enable module
+  //
+  TWCR = 0;
+  SetBit(TWCR, TWEA);
+  SetBit(TWCR, TWEN);
 }
 
 void ResetTimeout(void)
 {
-	// Mark the current time, to start the i2c timeout counter from
-	//
-	ui32StartTime = millis();
+  // Mark the current time, to start the i2c timeout counter from
+  //
+  ui32StartTime = millis();
 }
 
 uint8_t I2CTimeout(void)
 {
-	return((millis() - ui32StartTime) >= ui16Timeout);
+  return((millis() - ui32StartTime) >= ui16Timeout);
 }
 
 uint8_t I2C_start(void)
 {
-	ResetTimeout();
+  ResetTimeout();
 
-	TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
-	while(!(TWCR & (1<<TWINT)))
-	{
-		if(I2CTimeout())
-		{
-			I2C_Reset();
-			return(FALSE);
-		} 
-	}
-	if((TWI_STATUS == START) || (TWI_STATUS == REPEATED_START))
-	{
-		return(TRUE);
-	}
-	if(TWI_STATUS == LOST_ARBTRTN)
-	{
-		I2C_Reset();
-	}
-	return(FALSE);
+  TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
+  while(!(TWCR & (1<<TWINT)))
+  {
+    if(I2CTimeout())
+    {
+      I2C_Reset();
+      return(FALSE);
+    } 
+  }
+  if((TWI_STATUS == START) || (TWI_STATUS == REPEATED_START))
+  {
+    return(TRUE);
+  }
+  if(TWI_STATUS == LOST_ARBTRTN)
+  {
+    I2C_Reset();
+  }
+  return(FALSE);
 }
 
 uint8_t I2C_stop(void)
 {
-	ResetTimeout();
-	
-	TWCR = (1<<TWINT)|(1<<TWEN)| (1<<TWSTO);
-	while((TWCR & (1<<TWSTO)))
-	{
-		if(I2CTimeout())
-		{
-			I2C_Reset();
-			return(FALSE);
-		}
-	}
-	return(TRUE);
+  ResetTimeout();
+  
+  TWCR = (1<<TWINT)|(1<<TWEN)| (1<<TWSTO);
+  while((TWCR & (1<<TWSTO)))
+  {
+    if(I2CTimeout())
+    {
+      I2C_Reset();
+      return(FALSE);
+    }
+  }
+  return(TRUE);
 }
 
 uint8_t I2C_sendAddress(uint8_t ui8Address)
 {
-	TWDR = ui8Address;
-	ResetTimeout();
-	TWCR = (1<<TWINT) | (1<<TWEN);
-	while(!(TWCR & (1<<TWINT)))
-	{
-		if(I2CTimeout())
-		{
-			I2C_Reset();
-			return(FALSE);
-		}  
-	}
-	if((TWI_STATUS == MT_SLA_ACK) || (TWI_STATUS == MR_SLA_ACK))
-	{
-		return(TRUE);
-	}
+  TWDR = ui8Address;
+  ResetTimeout();
+  TWCR = (1<<TWINT) | (1<<TWEN);
+  while(!(TWCR & (1<<TWINT)))
+  {
+    if(I2CTimeout())
+    {
+      I2C_Reset();
+      return(FALSE);
+    }  
+  }
+  if((TWI_STATUS == MT_SLA_ACK) || (TWI_STATUS == MR_SLA_ACK))
+  {
+    return(TRUE);
+  }
 
-	if((TWI_STATUS == MT_SLA_NACK) || (TWI_STATUS == MR_SLA_NACK))
-	{
-		I2C_stop();
-	}
-	else
-	{
-		I2C_Reset();
-	} 
-	return(FALSE);
+  if((TWI_STATUS == MT_SLA_NACK) || (TWI_STATUS == MR_SLA_NACK))
+  {
+    I2C_stop();
+  }
+  else
+  {
+    I2C_Reset();
+  } 
+  return(FALSE);
 }
 
 uint8_t I2C_sendByte(uint8_t ui8Data)
 {
-	TWDR = ui8Data;
-	ResetTimeout();
-	TWCR = (1<<TWINT) | (1<<TWEN);
-	while(!(TWCR & (1<<TWINT)))
-	{
-		if(I2CTimeout())
-		{
-			I2C_Reset();
-			return(FALSE);
-		}
-	}
-	if(TWI_STATUS == MT_DATA_ACK)
-	{
-		return(TRUE);
-	}
-	if(TWI_STATUS == MT_DATA_NACK)
-	{
-		I2C_stop();
-	}
-	else
-	{
-		I2C_Reset();
-	} 
-	return(FALSE);
+  TWDR = ui8Data;
+  ResetTimeout();
+  TWCR = (1<<TWINT) | (1<<TWEN);
+  while(!(TWCR & (1<<TWINT)))
+  {
+    if(I2CTimeout())
+    {
+      I2C_Reset();
+      return(FALSE);
+    }
+  }
+  if(TWI_STATUS == MT_DATA_ACK)
+  {
+    return(TRUE);
+  }
+  if(TWI_STATUS == MT_DATA_NACK)
+  {
+    I2C_stop();
+  }
+  else
+  {
+    I2C_Reset();
+  } 
+  return(FALSE);
 }
 
 uint8_t I2C_receiveByte(uint8_t ack)
 {
-	ResetTimeout();
+  ResetTimeout();
 
-	if(ack)
-	{
-		TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
-	}
-	else
-	{
-		TWCR = (1<<TWINT) | (1<<TWEN);
-	}
-	while(!(TWCR & (1<<TWINT)))
-	{
-		if(I2CTimeout())
-		{
-			I2C_Reset();
-			return(FALSE);
-		}
-	}
-	if(TWI_STATUS == LOST_ARBTRTN)
-	{
-		I2C_Reset();
-		return(FALSE);
-	}
+  if(ack)
+  {
+    TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
+  }
+  else
+  {
+    TWCR = (1<<TWINT) | (1<<TWEN);
+  }
+  while(!(TWCR & (1<<TWINT)))
+  {
+    if(I2CTimeout())
+    {
+      I2C_Reset();
+      return(FALSE);
+    }
+  }
+  if(TWI_STATUS == LOST_ARBTRTN)
+  {
+    I2C_Reset();
+    return(FALSE);
+  }
 
-	if(((TWI_STATUS == MR_DATA_NACK) && (!ack)) ||
-	 ((TWI_STATUS == MR_DATA_ACK) && (ack)))
-	{
-		return(TRUE);
-	}
-	else
-	{
-		return(FALSE);
-	}
+  if(((TWI_STATUS == MR_DATA_NACK) && (!ack)) ||
+   ((TWI_STATUS == MR_DATA_ACK) && (ack)))
+  {
+    return(TRUE);
+  }
+  else
+  {
+    return(FALSE);
+  }
 }
 
 uint8_t I2C_Write2(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfBytes)
 {
-	uint8_t	i;
-	
-	if(I2C_start() == FALSE)
-	{
-		return(FALSE);
-	}
+  uint8_t i;
+  
+  if(I2C_start() == FALSE)
+  {
+    return(FALSE);
+  }
 
-	if(I2C_sendAddress(IQS5xx_ADDR<<1) == FALSE)
-	{
-		return(FALSE);
-	}
-	
-	if(I2C_sendByte((uint8_t)(ui16RegisterAddress>>8)) == FALSE)
-	{
-		return(FALSE);
-	}
-	
-	if(I2C_sendByte((uint8_t)ui16RegisterAddress) == FALSE)
-	{
-		return(FALSE);
-	}
-	
-	for(i = 0; i < ui8NoOfBytes; i++)
-	{
-		if(I2C_sendByte(*pData) == FALSE)
-		{
-			return(FALSE);
-		}
-		pData++;
-	}
+  if(I2C_sendAddress(IQS5xx_ADDR<<1) == FALSE)
+  {
+    return(FALSE);
+  }
+  
+  if(I2C_sendByte((uint8_t)(ui16RegisterAddress>>8)) == FALSE)
+  {
+    return(FALSE);
+  }
+  
+  if(I2C_sendByte((uint8_t)ui16RegisterAddress) == FALSE)
+  {
+    return(FALSE);
+  }
+  
+  for(i = 0; i < ui8NoOfBytes; i++)
+  {
+    if(I2C_sendByte(*pData) == FALSE)
+    {
+      return(FALSE);
+    }
+    pData++;
+  }
 
-	if(I2C_stop() == FALSE)
-	{
-		return(FALSE);
-	}
-	return(TRUE);
+  if(I2C_stop() == FALSE)
+  {
+    return(FALSE);
+  }
+  return(TRUE);
 }
 
 uint8_t I2C_Read2(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfBytes)
 {
-	uint8_t	i;
-		
-	if(ui8NoOfBytes == 0)
-	{
-		ui8NoOfBytes++;
-	}
+  uint8_t i;
+    
+  if(ui8NoOfBytes == 0)
+  {
+    ui8NoOfBytes++;
+  }
 
-	if(I2C_start() == FALSE)
-	{
-		return(FALSE);
-	}
+  if(I2C_start() == FALSE)
+  {
+    return(FALSE);
+  }
 
-	if(I2C_sendAddress(IQS5xx_ADDR<<1) == FALSE)
-	{
-		return(FALSE);
-	}
+  if(I2C_sendAddress(IQS5xx_ADDR<<1) == FALSE)
+  {
+    return(FALSE);
+  }
 
-	if(I2C_sendByte((uint8_t)(ui16RegisterAddress>>8)) == FALSE)
-	{
-		return(FALSE);
-	}
+  if(I2C_sendByte((uint8_t)(ui16RegisterAddress>>8)) == FALSE)
+  {
+    return(FALSE);
+  }
 
-	if(I2C_sendByte((uint8_t)ui16RegisterAddress) == FALSE)
-	{
-		return(FALSE);
-	}
+  if(I2C_sendByte((uint8_t)ui16RegisterAddress) == FALSE)
+  {
+    return(FALSE);
+  }
 
-	if(I2C_start() == FALSE)
-	{
-		return(FALSE);
-	}
+  if(I2C_start() == FALSE)
+  {
+    return(FALSE);
+  }
 
-	if(I2C_sendAddress((IQS5xx_ADDR<<1) + 0x01) == FALSE)
-	{
-		return(FALSE);
-	}
-	
-	for(i = 0; i < ui8NoOfBytes; i++)
-	{
-		if(i == (ui8NoOfBytes - 1))
-		{
-			if(I2C_receiveByte(0) == FALSE)
-			{
-				return(FALSE);
-			}
-		}
-		else
-		{
-			if(I2C_receiveByte(1) == FALSE)
-			{
-				return(FALSE);
-			}
-		}
-		*pData = TWDR;
-		pData++;
-	}
-	if(I2C_stop() == FALSE)
-	{
-		return(FALSE);
-	}
-	return(TRUE);
+  if(I2C_sendAddress((IQS5xx_ADDR<<1) + 0x01) == FALSE)
+  {
+    return(FALSE);
+  }
+  
+  for(i = 0; i < ui8NoOfBytes; i++)
+  {
+    if(i == (ui8NoOfBytes - 1))
+    {
+      if(I2C_receiveByte(0) == FALSE)
+      {
+        return(FALSE);
+      }
+    }
+    else
+    {
+      if(I2C_receiveByte(1) == FALSE)
+      {
+        return(FALSE);
+      }
+    }
+    *pData = TWDR;
+    pData++;
+  }
+  if(I2C_stop() == FALSE)
+  {
+    return(FALSE);
+  }
+  return(TRUE);
 }
