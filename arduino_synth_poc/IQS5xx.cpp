@@ -128,7 +128,7 @@ void DisplaySnap(void)
 //! \return None
 //                                                      
 //*****************************************************************************
-void Process_XY(void) 
+void Process_XY(uint16_t *xCoord, uint16_t *yCoord) 
 { 
   uint8_t   i; 
   static uint8_t ui8FirstTouch = 0;
@@ -154,22 +154,22 @@ void Process_XY(void)
     return;
   }
 
-  if((ui8SystemFlags[1] & SNAP_TOGGLE) != 0)
-  {
-    // A snap state has changed, thus indicate which channel
-    //
-    DisplaySnap();
-    return;
-  }
+//  if((ui8SystemFlags[1] & SNAP_TOGGLE) != 0)
+//  {
+//    // A snap state has changed, thus indicate which channel
+//    //
+//    DisplaySnap();
+//    return;
+//  }
 
-  if((Data_Buff[0]) == SINGLE_TAP) 
-  {   
-  //  Serial.println("Single Tap  "); 
-  }
-  else if((Data_Buff[1]) == TWO_FINGER_TAP)   
-  {
-  //  Serial.println("2 Finger Tap"); 
-  }   
+//  if((Data_Buff[0]) == SINGLE_TAP) 
+//  {   
+//  //  Serial.println("Single Tap  "); 
+//  }
+//  else if((Data_Buff[1]) == TWO_FINGER_TAP)   
+//  {
+//  //  Serial.println("2 Finger Tap"); 
+//  }   
 
   if(ui8NoOfFingers != 0) 
   {
@@ -186,39 +186,39 @@ void Process_XY(void)
   //    Serial.print("X5:  "); Serial.print("Y5:  "); Serial.print("TS5: "); Serial.println("TA5: ");
   //    ui8FirstTouch = 1;
   //  }
+//
+//    switch (Data_Buff[0])
+//    {
+//      case SINGLE_TAP   : //  Serial.print("Single Tap  "); 
+//                  break;
+//      case TAP_AND_HOLD : //  Serial.print("Tap & Hold  "); 
+//                  break;
+//      case SWIPE_X_NEG  : //  Serial.print("Swipe X-    "); 
+//                  break;
+//      case SWIPE_X_POS  : //  Serial.print("Swipe X+    "); 
+//                  break;
+//      case SWIPE_Y_POS  : //  Serial.print("Swipe Y+    "); 
+//                  break;
+//      case SWIPE_Y_NEG  :  // Serial.print("Swipe Y-    "); 
+//                  break;
+//    }
 
-    switch (Data_Buff[0])
-    {
-      case SINGLE_TAP   : //  Serial.print("Single Tap  "); 
-                  break;
-      case TAP_AND_HOLD : //  Serial.print("Tap & Hold  "); 
-                  break;
-      case SWIPE_X_NEG  : //  Serial.print("Swipe X-    "); 
-                  break;
-      case SWIPE_X_POS  : //  Serial.print("Swipe X+    "); 
-                  break;
-      case SWIPE_Y_POS  : //  Serial.print("Swipe Y+    "); 
-                  break;
-      case SWIPE_Y_NEG  :  // Serial.print("Swipe Y-    "); 
-                  break;
-    }
+//    switch (Data_Buff[1])
+//    {
+//      case TWO_FINGER_TAP : //  Serial.print("2 Finger Tap"); 
+//                  break;
+//      case SCROLL     : //  Serial.print("Scroll      "); 
+//                  break;
+//      case ZOOM     :  // Serial.print("Zoom        "); 
+//                  break;
+//    }
+//    if((Data_Buff[0] | Data_Buff[1]) == 0) 
+//    {
+//      // Serial.print("            ");
+//    }
 
-    switch (Data_Buff[1])
-    {
-      case TWO_FINGER_TAP : //  Serial.print("2 Finger Tap"); 
-                  break;
-      case SCROLL     : //  Serial.print("Scroll      "); 
-                  break;
-      case ZOOM     :  // Serial.print("Zoom        "); 
-                  break;
-    }
-    if((Data_Buff[0] | Data_Buff[1]) == 0) 
-    {
-      // Serial.print("            ");
-    }
-
-    i16RelX[1] = ((Data_Buff[5] << 8) | (Data_Buff[6]));
-    i16RelY[1] = ((Data_Buff[7] << 8) | (Data_Buff[8]));
+//    i16RelX[1] = ((Data_Buff[5] << 8) | (Data_Buff[6]));
+//    i16RelY[1] = ((Data_Buff[7] << 8) | (Data_Buff[8]));
     // Print_signed(i16RelX[1]);
     // Print_signed(i16RelY[1]);
     // Print_unsigned(ui8NoOfFingers);    
@@ -244,12 +244,21 @@ void Process_XY(void)
     ui8FirstTouch = 0;
   }
  
-    Serial.println();
-    Serial.print("X:   ");
-    Serial.print(ui16AbsX[1]);
-    Serial.print("   Y:   ");
-    Serial.println(ui16AbsY[1]);
-    Serial.println();
+//    Serial.println();
+//    Serial.print("X:   ");
+//    Serial.print(ui16AbsX[1]);
+//
+//    Serial.print("   Y:   ");
+//    Serial.println(ui16AbsY[1]);
+//    Serial.println();
+
+  if(ui16AbsX[1] != 65535){
+      *xCoord = ui16AbsX[1];
+    } 
+
+    if(ui16AbsY[1] != 65535){
+      *yCoord = ui16AbsY[1];
+    }
  
 }
 

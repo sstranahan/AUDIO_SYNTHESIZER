@@ -45,7 +45,10 @@
 #define octUp 12
 
 // Primary output signal
-#define outPin 13
+#define speakerOutPin 13
+#define headphoneOutPin 34
+
+#define headphoneDetect 35
 
 enum waveSelect_T {
   SQUARE,
@@ -82,6 +85,8 @@ waveSelect_T waveSelect;
 unsigned int octaveIdx = 2;           // Default octave is middle octave
 unsigned int stackSize = 0;
 
+unsigned int outPin;
+
 // Vars for trackpad comms
 uint8_t   Data_Buff[44];
 uint16_t  ui16SnapStatus[15], ui16PrevSnap[15];
@@ -102,6 +107,9 @@ void setup() {
 
   unsigned int loopIdx = 0;
 
+  pinMode(outPin, OUTPUT);
+  digitalWrite(outPin, LOW);
+
   // Initialize serial console w/ Baud Rate of 9600 Hz
   Serial.begin(9600);
   Serial.println("Hello!");
@@ -112,11 +120,15 @@ void setup() {
     pinMode(loopIdx, INPUT);
   }
 
-  pinMode(outPin, OUTPUT);
-
+  pinMode(speakerOutPin, OUTPUT);
+  pinMode(headphoneOutPin, OUTPUT);
+  
   pinMode(RDY_PIN, INPUT);
+  pinMode(headphoneDetect, INPUT);
 
-  cli();                            // Atomize interrupt system initialization
+  outPin = speakerOutPin;
+
+  cli();                              // Atomize interrupt system initialization
 
   /* First we reset the control register to make sure we start with everything disabled */
   TCCR1A = 0;                       // Reset entire TCCR1A to 0
@@ -153,8 +165,35 @@ void setup() {
   Close_Comms();
 }
 /*******************************************************************************************/
-
+/*******************************************************************************************/
+/*******************************************************************************************/
+/*******************************************************************************************/
 void loop() {
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////// CHECK HEADPHONES TASK ///////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // NOTES :
+  /////////////////////////////////////////////////////////////////////////////////////////////
+//
+  noInterrupts();
+
+  digitalWrite(headphoneOutPin, HIGH);
+
+  if (digitalRead(headphoneDetect) == LOW){    // Headphones inserted
+    digitalWrite(headphoneOutPin, LOW);
+    outPin = headphoneOutPin;
+    Serial.println("HEADPHONES");    
+  } 
+  else {
+    outPin = speakerOutPin;
+    Serial.println("SPEAKER");  
+  }
+  
+  digitalWrite(headphoneOutPin, LOW);
+  interrupts();
+    
+  /*******************************************************************************************/
 
   unsigned int loopIdx = 0;
   unsigned int btnNumber;
@@ -184,48 +223,48 @@ void loop() {
   // NOTES :
   ///////////////////////////////////////////////////////////////////////////////////////////// 
   
-  RDY_wait();
-
-//  if (digitalRead(11) == LOW){
-//      digitalWrite(35, LOW);
-//   } else {
-//      digitalWrite(35, HIGH);
-//   }
-  
-  I2C_Read(GestureEvents0_adr, &Data_Buff[0], 44);
-
-  if((Data_Buff[3] & SNAP_TOGGLE) != 0)
-  {
-    // If there was a change in a snap status, then read the snap status 
-    // bytes additionally. Keep previous valus to identify a state change
-    //
-    I2C_Read(SnapStatus_adr, &ui8TempData[0], 30);
-    for(i = 0; i < 15; i++)
-    {
-      ui16PrevSnap[i] = ui16SnapStatus[i];
-      ui16SnapStatus[i] = ((uint16_t)(ui8TempData[2*i])<<8) + 
-                 (uint16_t)ui8TempData[(2*i)+1];
-    }
-  }
-  //
-  // Terminate the communication session, so that the IQS5xx can continue 
-  // with sensing and processing
-  //
-  Close_Comms();
-  //
-  // Process received data 
-  //
-  Process_XY();
+//  RDY_wait();
 //
-//  for (id = 0; id < 5; id++){
-//    xCoord = ((Data_Buff[(7*id)+9] << 8) | (Data_Buff[(7*id)+10])); //9-16-23-30-37//10-17-24-31-38
-//    yCoord = ((Data_Buff[(7*id)+11] << 8) | (Data_Buff[(7*id)+12])); //11-18-25-32-39//12-19-26-33-40
+////  if (digitalRead(11) == LOW){
+////      digitalWrite(35, LOW);
+////   } else {
+////      digitalWrite(35, HIGH);
+////   }
+//  
+//  I2C_Read(GestureEvents0_adr, &Data_Buff[0], 44);
+//
+//  if((Data_Buff[3] & SNAP_TOGGLE) != 0)
+//  {
+//    // If there was a change in a snap status, then read the snap status 
+//    // bytes additionally. Keep previous valus to identify a state change
+//    //
+//    I2C_Read(SnapStatus_adr, &ui8TempData[0], 30);
+//    for(i = 0; i < 15; i++)
+//    {
+//      ui16PrevSnap[i] = ui16SnapStatus[i];
+//      ui16SnapStatus[i] = ((uint16_t)(ui8TempData[2*i])<<8) + 
+//                 (uint16_t)ui8TempData[(2*i)+1];
+//    }
 //  }
-  
-  Serial.print("X: ");
-  Serial.print(xCoord);
-  Serial.print("  Y: ");
-  Serial.println(yCoord);
+//  //
+//  // Terminate the communication session, so that the IQS5xx can continue 
+//  // with sensing and processing
+//  //
+//  Close_Comms();
+//  //
+//  // Process received data 
+//  //
+//  Process_XY(&xCoord, &yCoord);
+////
+////  for (id = 0; id < 5; id++){
+////    xCoord = ((Data_Buff[(7*id)+9] << 8) | (Data_Buff[(7*id)+10])); //9-16-23-30-37//10-17-24-31-38
+////    yCoord = ((Data_Buff[(7*id)+11] << 8) | (Data_Buff[(7*id)+12])); //11-18-25-32-39//12-19-26-33-40
+////  }
+//  
+//  Serial.print("X: ");
+//  Serial.print(xCoord);
+//  Serial.print("  Y: ");
+//  Serial.println(yCoord);
 
   /*******************************************************************************************/
 
@@ -320,7 +359,21 @@ void loop() {
 ISR(TIMER1_COMPA_vect) {
   TCNT1 = 0;                        //First, set the timer back to 0 so it resets for next interrupt
   OUT_STATE = !OUT_STATE;           //Invert output state
-  digitalWrite(outPin, OUT_STATE);  //Write new state to the speaker on pin D5
+
+  
+  digitalWrite(outPin, OUT_STATE);  //Write new state to the output pin
+
+  digitalWrite (headphoneOutPin, OUT_STATE);
+
+//  if (OUT_STATE == true){
+//      if(digitalRead(headphoneDetect) == LOW){
+//          Serial.println("Headphones");
+//          //outPin = headphoneOutPin;
+//      }else{
+//          Serial.println("Speaker");
+//          //outPin = speakerOutPin;    
+//      }      
+//  }
 }
 /*******************************************************************************************/
 
