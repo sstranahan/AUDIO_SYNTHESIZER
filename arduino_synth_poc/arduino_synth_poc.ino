@@ -65,15 +65,15 @@ enum waveSelect_T {
 
 // OCCR Values for C4 - C5 octave - will achieve physically correct
 // frequencies for square wave output
-const uint16_t FREQ_LOOKUP[5][8] {
-  {15288, 13260, 12134, 11453, 10204, 9091, 8099, 7645},
-  {7645 , 6811 , 6068 , 5727 , 5102 , 4545, 4049, 3822},
-  {3822 , 3405 , 3034 , 2863 , 2551 , 2272, 2025, 1911},
-  {1911 , 1703 , 1517 , 1432 , 1275 , 1136, 1012, 955},
-  {955  , 851  , 758  , 716  , 638  , 568 , 506 , 477}
+const uint16_t FREQ_LOOKUP[5][13] {
+  {15288, 14430, 13620, 12857, 12134, 11453, 10811, 10204, 9631, 9091, 8581, 8099, 7645},
+  {7645 , 7215 , 6811 , 6428 , 6068 , 5727 , 5405 , 5102 , 4816, 4545, 4290, 4049, 3822},
+  {3822 , 3608 , 3405 , 3214 , 3034 , 2863 , 2703 , 2551 , 2408, 2272, 2145, 2025, 1911},
+  {1911 , 1804 , 1703 , 1607 , 1517 , 1432 , 1351 , 1275 , 1204, 1136, 1073, 1012, 955},
+  {955  , 902  , 851  , 803  , 758  , 716  , 676  , 638  , 602 , 568 , 635 , 506 , 477}
 };
 
-bool btnFlags[8] = {0, 0, 0, 0, 0, 0, 0, 0}; // Flags prevent putting button on stack mult. times
+bool btnFlags[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Flags prevent putting button on stack mult. times
 
 StackArray<unsigned int> btnStack;    // Stack to keep track of order of button inputs
 
@@ -116,7 +116,7 @@ void setup() {
 
   // Set up GPIO input pins
   Serial.println("Setting Up I/O ...");
-  for (loopIdx = 2; loopIdx <= 11; loopIdx++) {
+  for (loopIdx = 36; loopIdx <= 48; loopIdx++) {
     pinMode(loopIdx, INPUT);
   }
 
@@ -141,12 +141,11 @@ void setup() {
   TCCR1B = B00000010;               // Prescaler = 8
 
   TIMSK1 |= B00000000;              // Start with output compare disabled, will enable
-  // on button input
+                                    // on button input
 
   sei();                            // Enable back global interrupts
 
   Serial.println("Initialization complete ...");
-
 
   // Initialize trackpad
   I2C_Setup();
@@ -176,22 +175,22 @@ void loop() {
   // NOTES :
   /////////////////////////////////////////////////////////////////////////////////////////////
 //
-  noInterrupts();
-
-  digitalWrite(headphoneOutPin, HIGH);
-
-  if (digitalRead(headphoneDetect) == LOW){    // Headphones inserted
-    digitalWrite(headphoneOutPin, LOW);
-    outPin = headphoneOutPin;
-    Serial.println("HEADPHONES");    
-  } 
-  else {
-    outPin = speakerOutPin;
-    Serial.println("SPEAKER");  
-  }
-  
-  digitalWrite(headphoneOutPin, LOW);
-  interrupts();
+//  noInterrupts();
+//
+//  digitalWrite(headphoneOutPin, HIGH);
+//
+//  if (digitalRead(headphoneDetect) == LOW){    // Headphones inserted
+//    digitalWrite(headphoneOutPin, LOW);
+//    outPin = headphoneOutPin;
+//    Serial.println("HEADPHONES");    
+//  } 
+//  else {
+//    outPin = speakerOutPin;
+//    Serial.println("SPEAKER");  
+//  }
+//  
+//  digitalWrite(headphoneOutPin, LOW);
+//  interrupts();
     
   /*******************************************************************************************/
 
@@ -303,16 +302,16 @@ void loop() {
   //
   //               Probably need a task to scan and clear stack outside of output loop
 
-  for (loopIdx = 2; loopIdx <= 9; loopIdx++) {
+  for (loopIdx = 36; loopIdx <= 48; loopIdx++) {
     if (digitalRead(loopIdx) == LOW) {
-      if (btnFlags[loopIdx - 2] == 0) {         // If button already on stack, ignore
-        btnFlags[loopIdx - 2] = 1;
-        btnStack.push(loopIdx - 2);
+      if (btnFlags[loopIdx - 36] == 0) {         // If button already on stack, ignore
+        btnFlags[loopIdx - 36] = 1;
+        btnStack.push(loopIdx - 36);
       }
       delay(10);
     } else {
-      if (btnFlags[loopIdx - 2] == 1) {
-        btnFlags[loopIdx - 2] = 0;
+      if (btnFlags[loopIdx - 36] == 1) {
+        btnFlags[loopIdx - 36] = 0;
       }
     }
   }
@@ -332,7 +331,7 @@ void loop() {
   if (!btnStack.isEmpty()) {
     for (loopIdx = 0; loopIdx <= stackSize; loopIdx++) {
       btnNumber = btnStack.peek();
-      if (digitalRead(btnNumber + 2) == HIGH) {
+      if (digitalRead(btnNumber + 36) == HIGH) {
         btnStack.pop();
         btnFlags[btnNumber] = 0;
         stackSize--;
@@ -363,15 +362,15 @@ ISR(TIMER1_COMPA_vect) {
   
   digitalWrite(outPin, OUT_STATE);  //Write new state to the output pin
 
-  digitalWrite (headphoneOutPin, OUT_STATE);
-
+//  digitalWrite (headphoneOutPin, OUT_STATE);
+//
 //  if (OUT_STATE == true){
 //      if(digitalRead(headphoneDetect) == LOW){
-//          Serial.println("Headphones");
-//          //outPin = headphoneOutPin;
+//
+//          outPin = headphoneOutPin;
 //      }else{
-//          Serial.println("Speaker");
-//          //outPin = speakerOutPin;    
+//
+//          outPin = speakerOutPin;    
 //      }      
 //  }
 }
