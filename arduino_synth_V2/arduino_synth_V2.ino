@@ -82,7 +82,7 @@ const uint16_t FREQ_LOOKUP[5][13] {
   {7645 , 7215 , 6811 , 6428 , 6068 , 5727 , 5405 , 5102 , 4816, 4545, 4290, 4049, 3822},
   {3822 , 3608 , 3405 , 3214 , 3034 , 2863 , 2703 , 2551 , 2408, 2272, 2145, 2025, 1911},
   {1911 , 1804 , 1703 , 1607 , 1517 , 1432 , 1351 , 1275 , 1204, 1136, 1073, 1012, 955},
-  {955  , 902  , 851  , 803  , 758  , 716  , 676  , 638  , 602 , 635 , 568 , 506 , 477}
+  {955  , 902  , 851  , 803  , 758  , 716  , 676  , 638  , 602 , 568 , 536 , 506 , 477}
 };
 
 bool btnFlags[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Flags prevent putting button on stack mult. times
@@ -229,13 +229,13 @@ void setup() {
     ,  3  // Priority
     ,  NULL ); //Task Handle
 
-  //  xTaskCreate(    // Problem here
-  //    TaskWaveSelect
-  //    ,  "WaveSel" // A name just for humans
-  //    ,  128  // Stack size
-  //    ,  NULL //Parameters for the task
-  //    ,  5  // Priority
-  //    ,  NULL ); //Task Handle
+    xTaskCreate(    // Problem here
+      TaskWaveSelect
+      ,  "WaveSel" // A name just for humans
+      ,  128  // Stack size
+      ,  NULL //Parameters for the task
+      ,  5  // Priority
+      ,  NULL ); //Task Handle
 
   xTaskCreate(
     TaskPollTrackpad
@@ -393,7 +393,7 @@ void TaskWaveSelect( void *pvParameters ) {
         digitalWrite(SINE_SEL_3, LOW);
         digitalWrite(SINE_SEL_4, LOW);
         digitalWrite(SINE_SEL_5, LOW);
-        Serial.println("Square");
+        //Serial.println("Square");
         break;
 
       case TRIANGLE :
@@ -426,7 +426,7 @@ void TaskWaveSelect( void *pvParameters ) {
             digitalWrite(SINE_SEL_3, LOW);
             digitalWrite(SINE_SEL_4, LOW);
             digitalWrite(SINE_SEL_5, LOW);
-            Serial.println("TRI MODE ...");
+            //Serial.println("TRI MODE ...");
             break;
           case 3 :
             digitalWrite(SQUARE_SEL, LOW);
@@ -456,7 +456,7 @@ void TaskWaveSelect( void *pvParameters ) {
             digitalWrite(SINE_SEL_5, LOW);
             break;
         }
-        Serial.println("Triangle");
+        //Serial.println("Triangle");
         break;
       case SINE :
 
@@ -488,7 +488,7 @@ void TaskWaveSelect( void *pvParameters ) {
             digitalWrite(SINE_SEL_3, HIGH);
             digitalWrite(SINE_SEL_4, LOW);
             digitalWrite(SINE_SEL_5, LOW);
-            Serial.println("SINE MODE ...");
+            //Serial.println("SINE MODE ...");
             break;
           case 3 :
             digitalWrite(SQUARE_SEL, LOW);
@@ -518,7 +518,7 @@ void TaskWaveSelect( void *pvParameters ) {
             digitalWrite(SINE_SEL_5, LOW);
             break;
         }
-        Serial.println("Sine");
+        //Serial.println("Sine");
         break;
       case NONE :
         digitalWrite(SQUARE_SEL, HIGH);
@@ -528,7 +528,7 @@ void TaskWaveSelect( void *pvParameters ) {
         digitalWrite(SINE_SEL_3, LOW);
         digitalWrite(SINE_SEL_4, LOW);
         digitalWrite(SINE_SEL_5, LOW);
-        Serial.println("None");
+        //Serial.println("None");
         break;
 
       default:
