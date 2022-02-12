@@ -128,7 +128,7 @@ void DisplaySnap(void)
 //! \return None
 //                                                      
 //*****************************************************************************
-void Process_XY(void) 
+void Process_XY(uint16_t* xCoord, uint16_t* yCoord) 
 { 
   uint8_t   i; 
   static uint8_t ui8FirstTouch = 0;
@@ -236,22 +236,28 @@ void Process_XY(void)
       // Print_unsigned(ui16AbsY[i+1]);
       // Print_unsigned(ui16TouchStrength[i+1]);
       // Print_unsigned(ui8Area[i+1]);
-//    }
-    // Serial.println("");
+      // }
+      // Serial.println("");
   } 
   else 
   {
     ui8FirstTouch = 0;
   }
 
-    if (ui16AbsX[1] != 65535 && ui16AbsY[1] != 65535) {
-      Serial.println();
-      Serial.print("X:   ");
-      Serial.print(ui16AbsX[1]);
-      Serial.print("   Y:   ");
-      Serial.println(ui16AbsY[1]);
-      Serial.println();
-    }
+  if (ui16AbsX[1] != 65535 && ui16AbsY[1] != 65535 && ui16AbsX[1] != 42405 && ui16AbsY[1] != 42405)
+  {
+    *xCoord = ui16AbsX[1];
+    *yCoord = ui16AbsY[1];  
+  }
+
+//    if (ui16AbsX[1] != 65535 && ui16AbsY[1] != 65535) {
+//      Serial.println();
+//      Serial.print("X:   ");
+//      Serial.print(ui16AbsX[1]);
+//      Serial.print("   Y:   ");
+//      Serial.println(ui16AbsY[1]);
+//      Serial.println();
+//    }
  
 }
 

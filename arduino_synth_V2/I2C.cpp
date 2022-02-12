@@ -98,7 +98,7 @@ uint8_t I2C_Write(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfB
   }
   else
   {
-    Serial.println("Comms write error");
+    // Serial.println("Comms write error");
     return(FALSE);
   }
 }
@@ -141,7 +141,7 @@ uint8_t I2C_Read(uint16_t ui16RegisterAddress, uint8_t *pData, uint8_t ui8NoOfBy
   }
   else
   {
-    Serial.println("Comms read error");
+    // Serial.println("Comms read error");
     return(FALSE);
   }
 }

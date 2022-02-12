@@ -606,17 +606,17 @@ void TaskPollTrackpad( void *pvParameters ) {
     //
     // Process received data
     //
-    Process_XY();
+    Process_XY(&xCoord, &yCoord);
     //
     //  for (id = 0; id < 5; id++){
     //    xCoord = ((Data_Buff[(7*id)+9] << 8) | (Data_Buff[(7*id)+10])); //9-16-23-30-37//10-17-24-31-38
     //    yCoord = ((Data_Buff[(7*id)+11] << 8) | (Data_Buff[(7*id)+12])); //11-18-25-32-39//12-19-26-33-40
     //  }
 
-//    Serial.print("X: ");
-//    Serial.print(xCoord);
-//    Serial.print("  Y: ");
-//    Serial.println(yCoord);
+    Serial.print("X: ");
+    Serial.print(xCoord);
+    Serial.print("  Y: ");
+    Serial.println(yCoord);
 
     vTaskDelay(1);
   }

@@ -15,7 +15,7 @@
 #define FALSE           0
 #define TRUE          !FALSE
 
-void Process_XY();
+void Process_XY(uint16_t* xCoord, uint16_t* yCoord);
 void IQS5xx_AcknowledgeReset(); 
 void IQS5xx_CheckVersion();
 
