@@ -31,8 +31,6 @@
 #include "defs.h"
 #include <Adafruit_MCP4725.h>
 
-
-
 // RTOS INCLUDES ////////////////////////////////////////////////////////////////////////////
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>  // add the FreeRTOS functions for Semaphores (or Flags).
@@ -104,8 +102,8 @@ uint16_t  ui16SnapStatus[15], ui16PrevSnap[15];
 uint16_t  xCoord;
 uint16_t  yCoord;
 
-Adafruit_MCP4725 dac1;
-Adafruit_MCP4725 dac2;
+// Adafruit_MCP4725 dac1;
+// Adafruit_MCP4725 dac2;
 
 TwoWire wire;
 
@@ -139,7 +137,7 @@ void setup() {
   cli();                              // Atomize interrupt system initialization
 
   // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB, on LEONARDO, MICRO, YUN, and other 32u4 based boards.
@@ -155,8 +153,6 @@ void setup() {
   //      xSemaphoreGive( ( xSerialSemaphore ) );  // Make the Serial Port available for use, by "Giving" the Semaphore.
   //  }
 
-
-
   pinMode(speakerOutPin, OUTPUT);
 
   outPin = speakerOutPin;
@@ -164,6 +160,9 @@ void setup() {
   pinMode(outPin, OUTPUT);
   digitalWrite(outPin, LOW);
   pinMode(RDY_PIN, INPUT);    // Trackpad ready pin
+  pinMode(RST_PIN, OUTPUT);    // Trackpad reset pin
+
+  digitalWrite(RST_PIN, HIGH);
 
   // Initialize serial console w/ Baud Rate of 9600 Hz
   Serial.println("Hello!");
@@ -196,57 +195,67 @@ void setup() {
 
   Serial.println("Initialization complete ...");
 
-  // Initialize trackpad
-  I2C_Setup();
-  //
-  // Clear the reset indication bit, so that from here on a reset can be
-  // detected if the bit becomes set
-  //
-  IQS5xx_AcknowledgeReset();
-  //
-  // Read the version and display on the serial terminal
-  //
-  IQS5xx_CheckVersion();
-  //
-  // End the communication window
-  //
-  Close_Comms();
 
-  // Now set up Tasks to run independently.
+//   Now set up Tasks to run independently.
   xTaskCreate(
     TaskScanKeyboard
-    ,  "ScanKeyboard"  // A name just for humans
+    ,  "ScanKey"  // A name just for humans
     ,  512  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL //Parameters for the task
-    ,  4  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  4  // Priority, with 5 (config -> MAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL ); //Task Handle
 
   xTaskCreate(
     TaskProduceOutput
-    ,  "ProduceOutput" // A name just for humans
+    ,  "ProduceOut" // A name just for humans
     ,  512  // Stack size
     ,  NULL //Parameters for the task
     ,  3  // Priority
     ,  NULL ); //Task Handle
 
     xTaskCreate(    // Problem here
-      TaskWaveSelect
-      ,  "WaveSel" // A name just for humans
-      ,  128  // Stack size
-      ,  NULL //Parameters for the task
-      ,  5  // Priority
-      ,  NULL ); //Task Handle
-
-  xTaskCreate(
-    TaskPollTrackpad
-    ,  "PollTrackpad" // A name just for humans
-    ,  512  // Stack size
+    TaskWaveSelect
+    ,  "WaveSel" // A name just for humans
+    ,  256  // Stack size
     ,  NULL //Parameters for the task
     ,  2  // Priority
     ,  NULL ); //Task Handle
 
-  dac1.begin(MCP4725_I2CADDR_DEFAULT);
-  dac2.begin(MCP4725_I2CADDR_DEFAULT);
+  xTaskCreate(
+    TaskPollTrackpad
+    ,  "PollTrack" // A name just for humans
+    ,  512  // Stack size
+    ,  NULL //Parameters for the task
+    ,  5  // Priority
+    ,  NULL ); //Task Handle
+
+  // dac1.begin(MCP4725_I2CADDR_DEFAULT);
+  // dac2.begin(MCP4725_I2CADDR_DEFAULT);
+
+    // Initialize trackpad
+  I2C_Setup();
+
+  Serial.println("Initializing TP 1 ...");
+  //
+  // Clear the reset indication bit, so that from here on a reset can be
+  // detected if the bit becomes set
+  //
+  IQS5xx_AcknowledgeReset();
+
+  Serial.println("Initializing TP 2 ...");
+  //
+  // Read the version and display on the serial terminal
+  //
+  IQS5xx_CheckVersion();
+
+  Serial.println("Initializing TP 3 ...");
+  //
+  // End the communication window
+  //
+  Close_Comms();
+
+  Serial.println("Initializing TP 4 ...");
+
 
   sei();                            // Enable back global interrupts
 
@@ -540,7 +549,9 @@ void TaskWaveSelect( void *pvParameters ) {
         digitalWrite(SINE_SEL_4, LOW);
         digitalWrite(SINE_SEL_5, LOW);
         break;
+      
     }
+    vTaskDelay(1);
   }
 }
 /*******************************************************************************************/
@@ -557,9 +568,11 @@ void TaskPollTrackpad( void *pvParameters ) {
   uint8_t   ui8TempData[30];
   int i = 0;
 
+  Serial.println("TP Task ...");
+
   for (;;) {
 
-    RDY_wait();
+    // RDY_wait();
     //
     // Wait for RDY to be set, this means that a communication window is
     // available.  Then read the 'important' data from the IQS5xx (Address
@@ -593,20 +606,20 @@ void TaskPollTrackpad( void *pvParameters ) {
     //
     // Process received data
     //
-    Process_XY(&xCoord, &yCoord);
+    Process_XY();
     //
     //  for (id = 0; id < 5; id++){
     //    xCoord = ((Data_Buff[(7*id)+9] << 8) | (Data_Buff[(7*id)+10])); //9-16-23-30-37//10-17-24-31-38
     //    yCoord = ((Data_Buff[(7*id)+11] << 8) | (Data_Buff[(7*id)+12])); //11-18-25-32-39//12-19-26-33-40
     //  }
 
-    Serial.print("X: ");
-    Serial.print(xCoord);
-    Serial.print("  Y: ");
-    Serial.println(yCoord);
+//    Serial.print("X: ");
+//    Serial.print(xCoord);
+//    Serial.print("  Y: ");
+//    Serial.println(yCoord);
 
+    vTaskDelay(1);
   }
-
 }
 /*******************************************************************************************/
 /*******************************************************************************************/
